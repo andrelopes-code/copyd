@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=My Product
+Comment=A cromenockle application
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/cromenockle.exe %u
+Terminal=false
+Type=Application
+Icon=cromenockle.exe
+Categories=Utility;
+StartupWMClass=cromenockle.exe
+
+ 
