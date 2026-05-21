@@ -14,7 +14,14 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@components/*": ["src/components/*"],
+      "@lib/*": ["src/lib/*"],
+      "@app-types/*": ["src/types/*"],
+      "@bindings/*": ["bindings/*"]
+    }
   },
   "include": ["src", "bindings"]
 }

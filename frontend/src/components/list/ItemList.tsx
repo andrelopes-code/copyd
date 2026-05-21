@@ -2,7 +2,7 @@ import { For, createEffect, type Component } from "solid-js";
 
 import ItemRow from "./ItemRow";
 import SectionHeader from "./SectionHeader";
-import type { ClipboardItem } from "../../types/item";
+import type { ClipboardItem } from "@app-types/item";
 
 interface ItemListProps {
   items: ClipboardItem[];

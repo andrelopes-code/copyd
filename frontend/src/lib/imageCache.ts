@@ -1,4 +1,4 @@
-import { ClipboardService } from "../../bindings/cromenockle/internal/service";
+import { ClipboardService } from "@bindings/cromenockle/internal/service";
 
 // Per-id memoisation of the base64 PNG payload. Item IDs are SHA-256
 // hashes of content, so a given id always resolves to the same bytes:

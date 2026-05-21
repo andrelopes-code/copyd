@@ -13,7 +13,7 @@ import {
 } from "lucide-solid";
 import type { Component } from "solid-js";
 
-import type { ContentType } from "../types/item";
+import type { ContentType } from "@app-types/item";
 
 type IconComponent = Component<{
   size?: number;

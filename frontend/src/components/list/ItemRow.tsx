@@ -1,11 +1,11 @@
 import { createResource, Show, type Component } from "solid-js";
 import { Dynamic } from "solid-js/web";
 
-import { cn } from "../../lib/cn";
-import { iconForContentType } from "../../lib/contentTypeIcon";
-import { formatRelativeTime } from "../../lib/formatTime";
-import { getImageData, imageDataUrl } from "../../lib/imageCache";
-import type { ClipboardItem, ContentType } from "../../types/item";
+import { cn } from "@lib/cn";
+import { iconForContentType } from "@lib/contentTypeIcon";
+import { formatRelativeTime } from "@lib/formatTime";
+import { getImageData, imageDataUrl } from "@lib/imageCache";
+import type { ClipboardItem, ContentType } from "@app-types/item";
 
 interface ItemRowProps {
   item: ClipboardItem;

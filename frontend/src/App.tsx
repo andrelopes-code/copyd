@@ -10,12 +10,12 @@ import {
 
 import { Events, Window } from "@wailsio/runtime";
 
-import { ClipboardService } from "../bindings/cromenockle/internal/service";
-import EmptyState from "./components/list/EmptyState";
-import ItemList from "./components/list/ItemList";
-import QuickLook from "./components/preview/QuickLook";
-import TitleBar from "./components/window/TitleBar";
-import type { ClipboardItem } from "./types/item";
+import { ClipboardService } from "@bindings/cromenockle/internal/service";
+import EmptyState from "@components/list/EmptyState";
+import ItemList from "@components/list/ItemList";
+import QuickLook from "@components/preview/QuickLook";
+import TitleBar from "@components/window/TitleBar";
+import type { ClipboardItem } from "@app-types/item";
 
 const CLIPBOARD_CHANGED = "clipboard:changed";
 // Time the "copied" state stays applied before window hides in prod. Long
