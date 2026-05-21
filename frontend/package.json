@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@kobalte/core": "^0.13.0",
     "@wailsio/runtime": "latest",
+    "lucide-solid": "^0.460.0",
     "solid-js": "^1.8.7"
   },
   "devDependencies": {
