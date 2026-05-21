@@ -24,6 +24,14 @@ linters:
       checks:
         - all
         - "-ST1000"
+  exclusions:
+    paths:
+      - frontend/node_modules
+      - build/android
+      - build/ios
+      - build/darwin
+      - build/windows
+      - build/linux/appimage/build
 
 issues:
   max-issues-per-linter: 0

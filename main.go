@@ -48,7 +48,7 @@ func main() {
 		log.Fatalf("resolve data path: %v", err)
 	}
 	imageDir := filepath.Join(filepath.Dir(dbPath), "images")
-	if err := os.MkdirAll(imageDir, 0o755); err != nil {
+	if err := os.MkdirAll(imageDir, 0o700); err != nil {
 		log.Fatalf("create image dir: %v", err)
 	}
 

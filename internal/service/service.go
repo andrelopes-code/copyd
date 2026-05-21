@@ -228,7 +228,7 @@ func (s *ClipboardService) Copy(id string) error {
 		if imagePath == "" {
 			return errors.New("image file missing for item")
 		}
-		data, err := os.ReadFile(imagePath)
+		data, err := os.ReadFile(imagePath) //nolint:gosec // imagePath comes from our own SQLite store
 		if err != nil {
 			return fmt.Errorf("read image: %w", err)
 		}
@@ -254,7 +254,7 @@ func (s *ClipboardService) GetImage(id string) (string, error) {
 	if imagePath == "" {
 		return "", errors.New("item is not an image")
 	}
-	data, err := os.ReadFile(imagePath)
+	data, err := os.ReadFile(imagePath) //nolint:gosec // imagePath comes from our own SQLite store
 	if err != nil {
 		return "", err
 	}
