@@ -42,7 +42,7 @@ const ItemList: Component<ItemListProps> = (props) => {
   return (
     <div
       role="listbox"
-      class="flex min-h-0 py-2 scrollbar-none! flex-1 flex-col gap-0.5 overflow-y-auto scroll-pt-9 scroll-pb-2 px-1.5 pb-2"
+      class="flex min-h-0 py-2 scrollbar-none! flex-1 flex-col gap-0.5 overflow-y-auto scroll-pt-9 scroll-pb-2 px-2"
     >
       <For each={props.items}>
         {(item, index) => (

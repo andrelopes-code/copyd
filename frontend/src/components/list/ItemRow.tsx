@@ -39,11 +39,11 @@ const ItemRow: Component<ItemRowProps> = (props) => {
       onClick={props.onActivate}
       class={cn(
         "relative flex h-9 shrink-0 cursor-pointer items-center gap-3 overflow-hidden rounded-md pl-3 pr-3",
-        "transition-colors duration-300 ease-out",
+        "transition-colors duration-300 ease-out outline-accent",
         props.copied
           ? "copy-row bg-[rgba(94,106,210,0.16)]"
           : props.selected
-            ? "bg-red-300"
+            ? "bg-surface-selected outline-1 outline-offset-2"
             : "hover:bg-surface-hover",
       )}
     >
