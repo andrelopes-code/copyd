@@ -10,8 +10,6 @@ One process. The clipboard watcher and the launcher window live in the same bina
 
 > Linux only. Built and tested on Fedora 44 / GNOME 47 Wayland. macOS and Windows builds compile but autostart and packaging are not supported in this release.
 
-<!-- TODO: add a screenshot or GIF here -->
-
 ## Install
 
 Pick the artifact that matches your distro from the [latest release](https://github.com/andrelopes-code/copyd/releases/latest).

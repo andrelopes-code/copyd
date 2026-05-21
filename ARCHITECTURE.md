@@ -1,7 +1,5 @@
 # Architecture
 
-## One paragraph
-
 `main.go` boots Wails, wires a SQLite store (`internal/store`), a Wayland clipboard monitor (`internal/clipboard`), and a service (`internal/service`) that bridges them to the frontend. The monitor runs in a goroutine bound to the service context — alive for the lifetime of the process. The service exposes a handful of methods (`List`, `Copy`, `Pin`, `Unpin`, `Delete`, `Clear`, `GetImage`) which Wails surfaces to Solid.js via auto-generated bindings under `frontend/bindings/`. Global hotkeys are delegated to the desktop environment, which re-launches the binary; Wails' `SingleInstance` then triggers `OnSecondInstanceLaunch` in the already-running process to toggle the window.
 
 ## Package layout

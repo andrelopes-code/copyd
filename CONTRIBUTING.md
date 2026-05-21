@@ -1,6 +1,6 @@
 # Contributing to copyd
 
-Thanks for the interest. This is a single-maintainer project; the bar for accepting changes is "does it move the project forward without growing surface area I can't maintain".
+Solo project. For anything beyond a one-line fix, open an issue first — I'd rather have you spend 10 minutes asking than 2 hours building the wrong thing.
 
 ## Prerequisites
 
@@ -25,7 +25,7 @@ Wails watches Go files, runs Vite, regenerates `frontend/bindings/**` whenever a
 ```bash
 cd frontend && npm run typecheck
 cd frontend && npm run lint
-golangci-lint run ./...
+golangci-lint run
 task build
 ```
 
