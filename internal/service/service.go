@@ -157,7 +157,22 @@ func (s *ClipboardService) emitChanged() {
 // ----- Frontend-callable API -----
 
 func (s *ClipboardService) List(query string) ([]item.Item, error) {
-	return s.store.List(context.Background(), query, defaultListLimit)
+	items, err := s.store.List(context.Background(), query, defaultListLimit)
+	if err != nil {
+		return nil, err
+	}
+	for i := range items {
+		// Heal legacy rows captured before detection was tightened and
+		// before TextPreview learned to skip leading blank lines.
+		switch string(items[i].ContentType) {
+		case "yaml", "code":
+			items[i].ContentType = item.TypeMultiline
+		}
+		if items[i].Preview == "" && items[i].Content != "" {
+			items[i].Preview = item.TextPreview(items[i].Content)
+		}
+	}
+	return items, nil
 }
 
 func (s *ClipboardService) Pin(id string) error {

@@ -16,9 +16,7 @@ interface ItemRowProps {
 }
 
 const MONO_TYPES: ReadonlySet<ContentType> = new Set([
-  "code",
   "json",
-  "yaml",
   "path",
   "command",
 ]);

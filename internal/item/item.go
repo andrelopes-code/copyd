@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 type ContentType string
@@ -14,9 +15,7 @@ const (
 	TypeURL       ContentType = "url"
 	TypeEmail     ContentType = "email"
 	TypeColor     ContentType = "color"
-	TypeCode      ContentType = "code"
 	TypeJSON      ContentType = "json"
-	TypeYAML      ContentType = "yaml"
 	TypePath      ContentType = "path"
 	TypeCommand   ContentType = "command"
 	TypeImage     ContentType = "image"
@@ -40,14 +39,16 @@ type Item struct {
 
 const previewMaxLen = 200
 
+// Detection is intentionally conservative: only types we can verify with
+// near-100% confidence get their own classification. Markdown, YAML and
+// generic code get bucketed into multiline/text — better than misleading
+// the user with a wrong icon.
 var (
 	urlRegex     = regexp.MustCompile(`^[a-z][a-z0-9+.\-]*://\S+$`)
 	emailRegex   = regexp.MustCompile(`^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$`)
 	colorRegex   = regexp.MustCompile(`^(#[0-9a-fA-F]{3,8}|(rgb|hsl)a?\([^)]+\))$`)
-	pathRegex    = regexp.MustCompile(`^(/|[A-Za-z]:[\\/]|~/|\./|\.\./)`)
+	pathRegex    = regexp.MustCompile(`^(/|[A-Za-z]:[\\/]|~/|\./|\.\./)[\w\-./~ ]+$`)
 	commandRegex = regexp.MustCompile(`^(sudo|cd|ls|rm|mv|cp|cat|grep|find|awk|sed|git|npm|pnpm|yarn|bun|go|cargo|rustc|docker|kubectl|helm|python|python3|pip|node|deno|curl|wget|ssh|scp|make|tar|brew|apt|dnf|pacman)\s`)
-	yamlRegex    = regexp.MustCompile(`(?m)^\s*[A-Za-z_][A-Za-z0-9_\-]*:(\s|$)`)
-	codeHints    = regexp.MustCompile(`(?m)(^\s*(func|fn|def|class|interface|type|public|private|export|import|package|use|impl|trait|struct|enum)\b|=>|::|;\s*$|\b(let|const|var)\s+\w+\s*=)`)
 )
 
 func DetectType(content string) ContentType {
@@ -78,31 +79,31 @@ func DetectType(content string) ContentType {
 		}
 	}
 
-	if codeHints.MatchString(trimmed) {
-		return TypeCode
-	}
-
-	if yamlRegex.MatchString(trimmed) && strings.Contains(trimmed, "\n") {
-		return TypeYAML
-	}
-
 	if strings.Contains(content, "\n") {
 		return TypeMultiline
 	}
-
 	return TypeText
 }
 
+// TextPreview returns the first non-blank line of content, rune-safely
+// truncated. Items copied with leading blank lines used to render with an
+// empty preview because the first line itself was "".
 func TextPreview(content string) string {
-	line := content
-	if i := strings.IndexByte(line, '\n'); i >= 0 {
-		line = line[:i]
+	var line string
+	for l := range strings.SplitSeq(content, "\n") {
+		if t := strings.TrimSpace(l); t != "" {
+			line = t
+			break
+		}
 	}
-	line = strings.TrimSpace(line)
-	if len(line) > previewMaxLen {
-		line = line[:previewMaxLen]
+	if line == "" {
+		return ""
 	}
-	return line
+	if utf8.RuneCountInString(line) <= previewMaxLen {
+		return line
+	}
+	runes := []rune(line)
+	return string(runes[:previewMaxLen]) + "…"
 }
 
 func ImagePreview(width, height int) string {
