@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Cromenockle (background)
+Comment=Start the cromenockle clipboard watcher hidden in the background
+Exec=cromenockle --hidden
+Icon=cromenockle
+Terminal=false
+Categories=Utility;
+X-GNOME-Autostart-enabled=true
+NoDisplay=true
