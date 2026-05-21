@@ -2,7 +2,7 @@ import { createEffect, createMemo, createSignal, onCleanup, onMount } from "soli
 
 import { Events, Window } from "@wailsio/runtime";
 
-import { ClipboardService } from "@bindings/cromenockle/internal/service";
+import { ClipboardService } from "@bindings/copyd/internal/service";
 import type { ClipboardItem } from "@app-types/item";
 
 const CLIPBOARD_CHANGED = "clipboard:changed";

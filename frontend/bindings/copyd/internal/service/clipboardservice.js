@@ -14,7 +14,7 @@ import * as item$0 from "../item/models.js";
  * @returns {$CancellablePromise<void>}
  */
 export function Clear() {
-    return $Call.ByID(658848437);
+    return $Call.ByID(3413102416);
 }
 
 /**
@@ -22,7 +22,7 @@ export function Clear() {
  * @returns {$CancellablePromise<void>}
  */
 export function Copy(id) {
-    return $Call.ByID(4003064549, id);
+    return $Call.ByID(4237301486, id);
 }
 
 /**
@@ -30,7 +30,7 @@ export function Copy(id) {
  * @returns {$CancellablePromise<void>}
  */
 export function Delete(id) {
-    return $Call.ByID(1075802163, id);
+    return $Call.ByID(3493858492, id);
 }
 
 /**
@@ -39,7 +39,7 @@ export function Delete(id) {
  * @returns {$CancellablePromise<string>}
  */
 export function GetImage(id) {
-    return $Call.ByID(3513229025, id);
+    return $Call.ByID(2597896766, id);
 }
 
 /**
@@ -47,7 +47,7 @@ export function GetImage(id) {
  * @returns {$CancellablePromise<item$0.Item[]>}
  */
 export function List(query) {
-    return $Call.ByID(1136181744, query).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3815708967, query).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -57,7 +57,7 @@ export function List(query) {
  * @returns {$CancellablePromise<void>}
  */
 export function Pin(id) {
-    return $Call.ByID(2040959527, id);
+    return $Call.ByID(75301334, id);
 }
 
 /**
@@ -65,7 +65,7 @@ export function Pin(id) {
  * @returns {$CancellablePromise<void>}
  */
 export function Unpin(id) {
-    return $Call.ByID(1435536866, id);
+    return $Call.ByID(3494679967, id);
 }
 
 // Private type creation functions

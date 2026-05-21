@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -12,25 +13,35 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 
-	"cromenockle/internal/clipboard"
-	"cromenockle/internal/service"
-	"cromenockle/internal/store"
+	"copyd/internal/clipboard"
+	"copyd/internal/service"
+	"copyd/internal/store"
 )
 
 //go:embed all:frontend/dist
 var assets embed.FS
 
 const (
-	appName      = "cromenockle"
-	appUniqueID  = "io.cromenockle.app"
+	appName      = "copyd"
+	appUniqueID  = "com.andrelopes.copyd"
 	windowWidth  = 720
 	windowHeight = 480
 )
 
+// version is set via -ldflags at build time. See Taskfile.yml.
+var version = "dev"
+
 func main() {
 	var startHidden bool
+	var showVersion bool
 	flag.BoolVar(&startHidden, "hidden", false, "start without showing the window (use for autostart on login)")
+	flag.BoolVar(&showVersion, "version", false, "print version and exit")
 	flag.Parse()
+
+	if showVersion {
+		fmt.Printf("copyd %s\n", version)
+		return
+	}
 
 	dbPath, err := xdg.DataFile(filepath.Join(appName, "items.db"))
 	if err != nil {
@@ -79,7 +90,7 @@ func main() {
 		// Re-launching the binary while one instance is already running
 		// is how the global hotkey reaches us: Wayland will not deliver
 		// keystrokes to background apps, so the desktop environment binds
-		// the shortcut to `cromenockle` and the running instance toggles
+		// the shortcut to `copyd` and the running instance toggles
 		// the window in/out of view here.
 		SingleInstance: &application.SingleInstanceOptions{
 			UniqueID: appUniqueID,

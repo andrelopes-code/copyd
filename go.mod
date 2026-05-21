@@ -1,4 +1,4 @@
-module cromenockle
+module copyd
 
 go 1.25.0
 

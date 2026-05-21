@@ -1,11 +1,13 @@
 .task
 bin
+/copyd
 frontend/dist
 frontend/node_modules
 build/linux/appimage/build
-build/linux/cromenockle.desktop
+build/linux/copyd.desktop
 build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
 
 CLAUDE.md
 .claude-docs
 .claude
+docs/superpowers/

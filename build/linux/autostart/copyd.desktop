@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=copyd (background)
+Comment=Start the copyd clipboard watcher hidden in the background
+Exec=copyd --hidden
+Icon=copyd
+Terminal=false
+Categories=Utility;
+X-GNOME-Autostart-enabled=true
+NoDisplay=true

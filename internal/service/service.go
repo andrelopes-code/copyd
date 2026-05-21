@@ -15,9 +15,9 @@ import (
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 
-	"cromenockle/internal/clipboard"
-	"cromenockle/internal/item"
-	"cromenockle/internal/store"
+	"copyd/internal/clipboard"
+	"copyd/internal/item"
+	"copyd/internal/store"
 )
 
 const (

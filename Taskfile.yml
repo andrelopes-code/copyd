@@ -1,10 +1,12 @@
 version: '3'
 
 vars:
-  APP_NAME: "cromenockle"
+  APP_NAME: "copyd"
   BIN_DIR: "bin"
   PACKAGE_MANAGER: '{{.PACKAGE_MANAGER | default "npm"}}'
   VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
+  VERSION:
+    sh: 'echo "${VERSION_TAG:-$(git describe --tags --always --dirty 2>/dev/null || echo dev)}"'
 
 includes:
   common: ./build/Taskfile.yml
