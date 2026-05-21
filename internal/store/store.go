@@ -44,7 +44,7 @@ func Open(path string) (*Store, error) {
 	}
 	db.SetMaxOpenConns(1)
 	if _, err := db.ExecContext(context.Background(), schema); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, fmt.Errorf("apply schema: %w", err)
 	}
 	return &Store{db: db}, nil
@@ -111,7 +111,7 @@ func (s *Store) List(ctx context.Context, query string, limit int) ([]item.Item,
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	out := make([]item.Item, 0, 64)
 	for rows.Next() {
@@ -183,12 +183,12 @@ func (s *Store) ClearUnpinned(ctx context.Context) ([]string, error) {
 	for rows.Next() {
 		var p string
 		if err := rows.Scan(&p); err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return nil, err
 		}
 		paths = append(paths, p)
 	}
-	rows.Close()
+	_ = rows.Close()
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
