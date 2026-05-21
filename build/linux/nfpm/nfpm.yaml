@@ -3,26 +3,28 @@
 #
 # The lines below are called `modelines`. See `:help modeline`
 
-name: "cromenockle.exe"
+name: "cromenockle"
 arch: ${GOARCH}
 platform: "linux"
 version: "0.1.0"
-section: "default"
-priority: "extra"
+section: "utils"
+priority: "optional"
 maintainer: ${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>
-description: "A cromenockle application"
-vendor: "My Company"
-homepage: "https://wails.io"
+description: "Wayland clipboard manager with a spotlight-style launcher window"
+vendor: "cromenockle"
+homepage: "https://github.com/dreco/cromenockle"
 license: "MIT"
 release: "1"
 
 contents:
-  - src: "./bin/cromenockle.exe"
-    dst: "/usr/local/bin/cromenockle.exe"
+  - src: "./bin/cromenockle"
+    dst: "/usr/bin/cromenockle"
   - src: "./build/appicon.png"
-    dst: "/usr/share/icons/hicolor/128x128/apps/cromenockle.exe.png"
-  - src: "./build/linux/cromenockle.exe.desktop"
-    dst: "/usr/share/applications/cromenockle.exe.desktop"
+    dst: "/usr/share/icons/hicolor/128x128/apps/cromenockle.png"
+  - src: "./build/linux/cromenockle.desktop"
+    dst: "/usr/share/applications/cromenockle.desktop"
+  - src: "./build/linux/autostart/cromenockle.desktop"
+    dst: "/etc/xdg/autostart/cromenockle.desktop"
 
 # Default dependencies for the GTK4 + WebKitGTK 6.0 stack (Ubuntu 24.04+ / Debian 13+)
 depends:
