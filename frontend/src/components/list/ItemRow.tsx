@@ -9,7 +9,9 @@ import type { ClipboardItem, ContentType } from "../../types/item";
 interface ItemRowProps {
   item: ClipboardItem;
   selected: boolean;
+  copied: boolean;
   onSelect: () => void;
+  onActivate: () => void;
   ref?: (el: HTMLDivElement) => void;
 }
 
@@ -24,15 +26,25 @@ const MONO_TYPES: ReadonlySet<ContentType> = new Set([
 const ItemRow: Component<ItemRowProps> = (props) => {
   const isMono = () => MONO_TYPES.has(props.item.contentType);
 
+  const handlePointerEnter = () => {
+    if (!props.copied) props.onSelect();
+  };
+
   return (
     <div
       ref={props.ref}
       role="option"
       aria-selected={props.selected}
-      onClick={props.onSelect}
+      onPointerEnter={handlePointerEnter}
+      onClick={props.onActivate}
       class={cn(
-        "relative flex h-9 shrink-0 cursor-default items-center gap-3 rounded-md pl-3 pr-3",
-        props.selected ? "bg-surface-selected" : "hover:bg-surface-hover",
+        "relative flex h-9 shrink-0 cursor-pointer items-center gap-3 overflow-hidden rounded-md pl-3 pr-3",
+        "transition-colors duration-300 ease-out",
+        props.copied
+          ? "copy-row bg-[rgba(94,106,210,0.16)]"
+          : props.selected
+            ? "bg-surface-selected"
+            : "hover:bg-surface-hover",
       )}
     >
       <Show when={props.item.pinned}>
@@ -44,8 +56,12 @@ const ItemRow: Component<ItemRowProps> = (props) => {
 
       <span
         class={cn(
-          "flex h-4 w-4 shrink-0 items-center justify-center",
-          props.selected ? "text-foreground" : "text-muted-2",
+          "relative flex h-4 w-4 shrink-0 items-center justify-center transition-colors duration-300 ease-out",
+          props.copied
+            ? "text-accent"
+            : props.selected
+              ? "text-foreground"
+              : "text-muted-2",
         )}
       >
         <Show
@@ -67,16 +83,35 @@ const ItemRow: Component<ItemRowProps> = (props) => {
 
       <span
         class={cn(
-          "min-w-0 flex-1 truncate text-sm",
+          "min-w-0 flex-1 truncate text-sm transition-colors duration-300 ease-out",
           isMono() && "font-mono text-[13px]",
-          props.selected ? "text-foreground" : "text-muted",
+          props.copied || props.selected ? "text-foreground" : "text-muted",
         )}
       >
         {props.item.preview}
       </span>
 
-      <span class="shrink-0 text-xs tabular-nums text-muted-2">
-        {formatRelativeTime(props.item.lastUsedAt)}
+      <span class="grid shrink-0 text-right text-xs tabular-nums leading-none">
+        <span
+          class={cn(
+            "col-start-1 row-start-1 transition-all duration-300 ease-out text-muted-2",
+            props.copied
+              ? "opacity-0 -translate-x-2"
+              : "opacity-100 translate-x-0",
+          )}
+        >
+          {formatRelativeTime(props.item.lastUsedAt)}
+        </span>
+        <span
+          class={cn(
+            "col-start-1 row-start-1 font-medium text-accent transition-all duration-300 ease-out",
+            props.copied
+              ? "opacity-100 translate-x-0"
+              : "opacity-0 translate-x-2",
+          )}
+        >
+          Copied
+        </span>
       </span>
     </div>
   );

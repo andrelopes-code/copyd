@@ -7,7 +7,9 @@ import type { ClipboardItem } from "../../types/item";
 interface ItemListProps {
   items: ClipboardItem[];
   selectedIndex: number;
+  copiedId: string | undefined;
   onSelect: (index: number) => void;
+  onActivate: (id: string) => void;
   showSections: boolean;
 }
 
@@ -50,7 +52,9 @@ const ItemList: Component<ItemListProps> = (props) => {
             <ItemRow
               item={item}
               selected={index() === props.selectedIndex}
+              copied={item.id === props.copiedId}
               onSelect={() => props.onSelect(index())}
+              onActivate={() => props.onActivate(item.id)}
               ref={(el) => {
                 rowRefs[index()] = el;
               }}
