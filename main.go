@@ -6,9 +6,11 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/adrg/xdg"
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 
 	"cromenockle/internal/clipboard"
 	"cromenockle/internal/service"
@@ -53,6 +55,18 @@ func main() {
 
 	var window *application.WebviewWindow
 
+	toggleWindow := func() {
+		if window == nil {
+			return
+		}
+		if window.IsVisible() {
+			window.Hide()
+			return
+		}
+		window.Show()
+		window.Focus()
+	}
+
 	app := application.New(application.Options{
 		Name:        appName,
 		Description: "Wayland clipboard manager",
@@ -70,15 +84,7 @@ func main() {
 		SingleInstance: &application.SingleInstanceOptions{
 			UniqueID: appUniqueID,
 			OnSecondInstanceLaunch: func(_ application.SecondInstanceData) {
-				if window == nil {
-					return
-				}
-				if window.IsVisible() {
-					window.Hide()
-					return
-				}
-				window.Show()
-				window.Focus()
+				toggleWindow()
 			},
 		},
 	})
@@ -94,7 +100,6 @@ func main() {
 		DisableResize:    true,
 		Frameless:        true,
 		AlwaysOnTop:      true,
-		Hidden:           startHidden,
 		InitialPosition:  application.WindowCentered,
 		BackgroundType:   application.BackgroundTypeTranslucent,
 		BackgroundColour: application.NewRGBA(15, 15, 17, 200),
@@ -108,6 +113,20 @@ func main() {
 			WindowIsTranslucent: true,
 		},
 	})
+
+	if startHidden {
+		// On Linux GTK4, creating the window with Hidden:true (or hiding
+		// before the GtkWidget exists) trips GTK_IS_WIDGET assertions.
+		// We let the window come up normally and hide it on the first
+		// WindowShow event — by then the widget is realised and the Hide
+		// call lands on a valid pointer. There is a brief flash at boot.
+		var hideOnce sync.Once
+		window.OnWindowEvent(events.Common.WindowShow, func(_ *application.WindowEvent) {
+			hideOnce.Do(func() {
+				window.Hide()
+			})
+		})
+	}
 
 	if err := app.Run(); err != nil {
 		log.Fatal(err)
