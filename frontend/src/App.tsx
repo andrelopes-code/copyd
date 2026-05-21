@@ -1,105 +1,32 @@
 import {
+  Show,
   createEffect,
-  createMemo,
   createSignal,
   onCleanup,
-  onMount,
-  Show,
   type Component,
 } from "solid-js";
 
-import { Events, Window } from "@wailsio/runtime";
-
-import { ClipboardService } from "@bindings/cromenockle/internal/service";
+import ErrorState from "@components/feedback/ErrorState";
+import ErrorToast from "@components/feedback/ErrorToast";
 import EmptyState from "@components/list/EmptyState";
 import ItemList from "@components/list/ItemList";
 import QuickLook from "@components/preview/QuickLook";
 import TitleBar from "@components/window/TitleBar";
-import type { ClipboardItem } from "@app-types/item";
-
-const CLIPBOARD_CHANGED = "clipboard:changed";
-// Time the "copied" state stays applied before window hides in prod. Long
-// enough for the spotlight to cross the row and the border glow to peak.
-const COPY_ANIMATION_MS = 620;
-// In dev there is no IPC trigger to re-show the window, so we keep the
-// "copied" state applied long enough to see the full intro + a clear hold +
-// the outro transitions back to baseline.
-const COPY_DEV_LINGER_MS = 1500;
+import { createClipboardStore } from "@stores/clipboardStore";
 
 const App: Component = () => {
-  const [query, setQuery] = createSignal("");
-  const [items, setItems] = createSignal<ClipboardItem[]>([]);
-  const [selectedIndex, setSelectedIndex] = createSignal(0);
-  const [copiedId, setCopiedId] = createSignal<string | undefined>();
-  const [isCopying, setIsCopying] = createSignal(false);
+  const store = createClipboardStore();
   const [peekOpen, setPeekOpen] = createSignal(false);
 
-  const currentItem = createMemo<ClipboardItem | undefined>(() => items()[selectedIndex()]);
-
-  const refresh = async () => {
-    try {
-      const result = await ClipboardService.List(query());
-      setItems(result as unknown as ClipboardItem[]);
-    } catch (err) {
-      console.error("ClipboardService.List failed", err);
-    }
-  };
-
+  // A successful copy hides the window — close the peek so it doesn't
+  // linger when the window shows back up.
   createEffect(() => {
-    query();
-    void refresh();
+    if (store.copiedId() !== undefined) setPeekOpen(false);
   });
-
-  createEffect(() => {
-    items();
-    setSelectedIndex(0);
-  });
-
-  let unsubscribe: (() => void) | undefined;
-  onMount(() => {
-    unsubscribe = Events.On(CLIPBOARD_CHANGED, () => {
-      void refresh();
-    });
-  });
-  onCleanup(() => unsubscribe?.());
-
-  let copyTimer: number | undefined;
-
-  const finishCopy = () => {
-    setCopiedId(undefined);
-    setIsCopying(false);
-  };
-
-  const copyItem = async (id: string) => {
-    if (isCopying()) return;
-    setIsCopying(true);
-
-    try {
-      await ClipboardService.Copy(id);
-    } catch (err) {
-      console.error("ClipboardService.Copy failed", err);
-      setIsCopying(false);
-      return;
-    }
-
-    setPeekOpen(false);
-    setCopiedId(id);
-    if (copyTimer !== undefined) window.clearTimeout(copyTimer);
-
-    if (import.meta.env.DEV) {
-      copyTimer = window.setTimeout(finishCopy, COPY_DEV_LINGER_MS);
-      return;
-    }
-
-    copyTimer = window.setTimeout(() => {
-      void Window.Hide();
-      window.setTimeout(finishCopy, 80);
-    }, COPY_ANIMATION_MS);
-  };
 
   const activateSelected = () => {
-    const current = currentItem();
-    if (current) void copyItem(current.id);
+    const current = store.currentItem();
+    if (current) void store.copyItem(current.id);
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -110,14 +37,14 @@ const App: Component = () => {
         setPeekOpen(false);
         return;
       }
-      if (query()) {
+      if (store.query()) {
         event.preventDefault();
-        setQuery("");
+        store.setQuery("");
       }
       return;
     }
 
-    const list = items();
+    const list = store.items();
     if (!list.length) return;
 
     // Quick Look toggle. Right arrow opens or closes the peek for the
@@ -125,7 +52,7 @@ const App: Component = () => {
     // the user can scrub through items with the peek as a live viewer.
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      if (currentItem()) setPeekOpen((v) => !v);
+      if (store.currentItem()) setPeekOpen((v) => !v);
       return;
     }
     if (event.key === "ArrowLeft" && peekOpen()) {
@@ -134,18 +61,20 @@ const App: Component = () => {
       return;
     }
 
-    const isDown = event.key === "ArrowDown" || (event.key === "Tab" && !event.shiftKey);
-    const isUp = event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey);
+    const isDown =
+      event.key === "ArrowDown" || (event.key === "Tab" && !event.shiftKey);
+    const isUp =
+      event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey);
 
     if (isDown) {
       event.preventDefault();
-      setSelectedIndex((i) => Math.min(i + 1, list.length - 1));
+      store.moveSelection(1);
       return;
     }
 
     if (isUp) {
       event.preventDefault();
-      setSelectedIndex((i) => Math.max(i - 1, 0));
+      store.moveSelection(-1);
       return;
     }
 
@@ -157,50 +86,65 @@ const App: Component = () => {
 
     // Space activates only when the search is empty, so typing is not
     // interrupted mid-query.
-    if (event.key === " " && !query()) {
+    if (event.key === " " && !store.query()) {
       event.preventDefault();
       activateSelected();
     }
   };
 
   window.addEventListener("keydown", handleKeyDown);
-  onCleanup(() => {
-    window.removeEventListener("keydown", handleKeyDown);
-    if (copyTimer !== undefined) window.clearTimeout(copyTimer);
-  });
+  onCleanup(() => window.removeEventListener("keydown", handleKeyDown));
 
   return (
     <div class="flex h-full w-full flex-col bg-background">
-      <TitleBar value={query()} onInput={setQuery} />
+      <TitleBar value={store.query()} onInput={store.setQuery} />
       <main class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
         <Show
-          when={items().length > 0}
+          when={!store.loadError()}
           fallback={
-            <EmptyState
-              title={query() ? "No matching items" : "No items captured yet"}
-              description={
-                query()
-                  ? "Try a different search term."
-                  : "Items copied to the clipboard will appear here."
-              }
+            <ErrorState
+              title="Couldn't reach the clipboard service"
+              description={store.loadError()!}
+              onRetry={() => void store.retry()}
             />
           }
         >
-          <ItemList
-            items={items()}
-            selectedIndex={selectedIndex()}
-            copiedId={copiedId()}
-            onActivate={(id) => void copyItem(id)}
-            showSections={!query()}
-          />
+          <Show
+            when={store.items().length > 0}
+            fallback={
+              <EmptyState
+                title={
+                  store.query() ? "No matching items" : "No items captured yet"
+                }
+                description={
+                  store.query()
+                    ? "Try a different search term."
+                    : "Items copied to the clipboard will appear here."
+                }
+              />
+            }
+          >
+            <ItemList
+              items={store.items()}
+              selectedIndex={store.selectedIndex()}
+              copiedId={store.copiedId()}
+              onActivate={(id) => void store.copyItem(id)}
+              showSections={!store.query()}
+            />
+          </Show>
+
+          <Show when={peekOpen() && store.currentItem()}>
+            <QuickLook
+              item={store.currentItem()!}
+              onClose={() => setPeekOpen(false)}
+            />
+          </Show>
         </Show>
 
-        <Show when={peekOpen() && currentItem()}>
-          <QuickLook
-            item={currentItem()!}
-            onClose={() => setPeekOpen(false)}
-          />
-        </Show>
+        <ErrorToast
+          message={store.actionError()}
+          onDismiss={store.dismissActionError}
+        />
       </main>
     </div>
   );

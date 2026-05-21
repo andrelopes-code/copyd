@@ -17,6 +17,7 @@
   --color-muted-2: rgba(235, 235, 245, 0.35);
   --color-muted-3: rgba(235, 235, 245, 0.22);
   --color-accent: #5562d8;
+  --color-danger: #e06b6b;
 
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -151,4 +152,26 @@ textarea {
 @keyframes quicklook-in {
   from { opacity: 0; transform: scale(0.98); }
   to   { opacity: 1; transform: scale(1); }
+}
+
+/* ---------- Error toast ----------
+   Slides up from the bottom with a fade. Exit mirrors entry, slightly
+   shorter — the user has already acknowledged the message visually. */
+
+.error-toast-enter {
+  animation: error-toast-in 220ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.error-toast-exit {
+  animation: error-toast-out 160ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes error-toast-in {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes error-toast-out {
+  from { opacity: 1; transform: translate(-50%, 0); }
+  to   { opacity: 0; transform: translate(-50%, 8px); }
 }

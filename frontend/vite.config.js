@@ -9,6 +9,7 @@ export default defineConfig({
     alias: {
       "@components": fileURLToPath(new URL("./src/components", import.meta.url)),
       "@lib": fileURLToPath(new URL("./src/lib", import.meta.url)),
+      "@stores": fileURLToPath(new URL("./src/stores", import.meta.url)),
       "@app-types": fileURLToPath(new URL("./src/types", import.meta.url)),
       "@bindings": fileURLToPath(new URL("./bindings", import.meta.url)),
     },

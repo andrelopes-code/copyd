@@ -19,6 +19,7 @@
     "paths": {
       "@components/*": ["src/components/*"],
       "@lib/*": ["src/lib/*"],
+      "@stores/*": ["src/stores/*"],
       "@app-types/*": ["src/types/*"],
       "@bindings/*": ["bindings/*"]
     }
