@@ -1,5 +1,6 @@
 import {
   createEffect,
+  createMemo,
   createSignal,
   onCleanup,
   onMount,
@@ -12,6 +13,7 @@ import { Events, Window } from "@wailsio/runtime";
 import { ClipboardService } from "../bindings/cromenockle/internal/service";
 import EmptyState from "./components/list/EmptyState";
 import ItemList from "./components/list/ItemList";
+import QuickLook from "./components/preview/QuickLook";
 import TitleBar from "./components/window/TitleBar";
 import type { ClipboardItem } from "./types/item";
 
@@ -30,6 +32,9 @@ const App: Component = () => {
   const [selectedIndex, setSelectedIndex] = createSignal(0);
   const [copiedId, setCopiedId] = createSignal<string | undefined>();
   const [isCopying, setIsCopying] = createSignal(false);
+  const [peekOpen, setPeekOpen] = createSignal(false);
+
+  const currentItem = createMemo<ClipboardItem | undefined>(() => items()[selectedIndex()]);
 
   const refresh = async () => {
     try {
@@ -77,12 +82,11 @@ const App: Component = () => {
       return;
     }
 
+    setPeekOpen(false);
     setCopiedId(id);
     if (copyTimer !== undefined) window.clearTimeout(copyTimer);
 
     if (import.meta.env.DEV) {
-      // No IPC trigger to re-show the window in dev yet, so keep it open
-      // and let the "copied" feedback linger long enough to be obvious.
       copyTimer = window.setTimeout(finishCopy, COPY_DEV_LINGER_MS);
       return;
     }
@@ -94,22 +98,41 @@ const App: Component = () => {
   };
 
   const activateSelected = () => {
-    const current = items()[selectedIndex()];
+    const current = currentItem();
     if (current) void copyItem(current.id);
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Escape" && query()) {
-      // Esc with active query clears the search before Wails hides the
-      // window. When the query is already empty, let HideOnEscape do its
-      // job.
-      event.preventDefault();
-      setQuery("");
+    // Escape is tiered: close peek -> clear query -> let Wails hide.
+    if (event.key === "Escape") {
+      if (peekOpen()) {
+        event.preventDefault();
+        setPeekOpen(false);
+        return;
+      }
+      if (query()) {
+        event.preventDefault();
+        setQuery("");
+      }
       return;
     }
 
     const list = items();
     if (!list.length) return;
+
+    // Quick Look toggle. Right arrow opens or closes the peek for the
+    // currently selected item. Arrow-up/down keeps working while open so
+    // the user can scrub through items with the peek as a live viewer.
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      if (currentItem()) setPeekOpen((v) => !v);
+      return;
+    }
+    if (event.key === "ArrowLeft" && peekOpen()) {
+      event.preventDefault();
+      setPeekOpen(false);
+      return;
+    }
 
     const isDown = event.key === "ArrowDown" || (event.key === "Tab" && !event.shiftKey);
     const isUp = event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey);
@@ -149,7 +172,7 @@ const App: Component = () => {
   return (
     <div class="flex h-full w-full flex-col bg-background">
       <TitleBar value={query()} onInput={setQuery} />
-      <main class="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <main class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
         <Show
           when={items().length > 0}
           fallback={
@@ -167,9 +190,15 @@ const App: Component = () => {
             items={items()}
             selectedIndex={selectedIndex()}
             copiedId={copiedId()}
-            onSelect={setSelectedIndex}
             onActivate={(id) => void copyItem(id)}
             showSections={!query()}
+          />
+        </Show>
+
+        <Show when={peekOpen() && currentItem()}>
+          <QuickLook
+            item={currentItem()!}
+            onClose={() => setPeekOpen(false)}
           />
         </Show>
       </main>

@@ -22,4 +22,6 @@ export interface ClipboardItem {
   useCount: number;
   size: number;
   sourceApp?: string;
+  width?: number;
+  height?: number;
 }
