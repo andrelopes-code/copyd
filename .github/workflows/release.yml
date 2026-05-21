@@ -1,0 +1,116 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and release
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        run: |
+          VERSION_TAG="${GITHUB_REF_NAME}"
+          VERSION="${VERSION_TAG#v}"
+          echo "tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
+          echo "plain=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Building $VERSION_TAG ($VERSION)"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-4-dev \
+            libwebkitgtk-6.0-dev \
+            libfuse2 \
+            file
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install build tools
+        run: |
+          go install github.com/go-task/task/v3/cmd/task@latest
+          go install -v github.com/wailsapp/wails/v3/cmd/wails3@latest
+
+      - name: Sync nfpm version
+        run: |
+          sed -i "s/^version: \".*\"/version: \"${{ steps.version.outputs.plain }}\"/" \
+            build/linux/nfpm/nfpm.yaml
+          grep '^version:' build/linux/nfpm/nfpm.yaml
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build
+        env:
+          VERSION_TAG: ${{ steps.version.outputs.tag }}
+        run: task build
+
+      - name: Package (RPM + DEB + AppImage)
+        env:
+          VERSION_TAG: ${{ steps.version.outputs.tag }}
+        run: task linux:package
+
+      - name: Pack tar.gz
+        run: |
+          mkdir -p bin/staging
+          cp bin/copyd bin/staging/
+          tar -czf bin/copyd-${{ steps.version.outputs.plain }}-linux-amd64.tar.gz \
+            -C bin/staging copyd
+          rm -rf bin/staging
+
+      - name: List produced assets
+        working-directory: bin
+        run: ls -la
+
+      - name: Generate SHA256SUMS
+        working-directory: bin
+        run: |
+          sha256sum copyd*.rpm copyd*.deb copyd*.AppImage copyd-*-linux-amd64.tar.gz \
+            > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Extract release notes
+        run: |
+          ./scripts/extract-changelog.sh "${{ steps.version.outputs.plain }}" \
+            > release-notes.md
+          cat release-notes.md
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "copyd ${{ steps.version.outputs.tag }}" \
+            --notes-file release-notes.md \
+            bin/copyd*.rpm \
+            bin/copyd*.deb \
+            bin/copyd*.AppImage \
+            bin/copyd-*-linux-amd64.tar.gz \
+            bin/SHA256SUMS
