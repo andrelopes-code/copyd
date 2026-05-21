@@ -43,14 +43,14 @@ const ItemRow: Component<ItemRowProps> = (props) => {
         props.copied
           ? "copy-row bg-[rgba(94,106,210,0.16)]"
           : props.selected
-            ? "bg-surface-selected"
+            ? "bg-red-300"
             : "hover:bg-surface-hover",
       )}
     >
       <Show when={props.item.pinned}>
         <span
           aria-hidden="true"
-          class="pointer-events-none absolute left-1 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent"
+          class="pointer-events-none absolute left-1 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-full bg-accent"
         />
       </Show>
 

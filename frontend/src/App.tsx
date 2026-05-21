@@ -29,6 +29,7 @@ const App: Component = () => {
   const [items, setItems] = createSignal<ClipboardItem[]>([]);
   const [selectedIndex, setSelectedIndex] = createSignal(0);
   const [copiedId, setCopiedId] = createSignal<string | undefined>();
+  const [isCopying, setIsCopying] = createSignal(false);
 
   const refresh = async () => {
     try {
@@ -58,11 +59,21 @@ const App: Component = () => {
   onCleanup(() => unsubscribe?.());
 
   let copyTimer: number | undefined;
+
+  const finishCopy = () => {
+    setCopiedId(undefined);
+    setIsCopying(false);
+  };
+
   const copyItem = async (id: string) => {
+    if (isCopying()) return;
+    setIsCopying(true);
+
     try {
       await ClipboardService.Copy(id);
     } catch (err) {
       console.error("ClipboardService.Copy failed", err);
+      setIsCopying(false);
       return;
     }
 
@@ -70,32 +81,62 @@ const App: Component = () => {
     if (copyTimer !== undefined) window.clearTimeout(copyTimer);
 
     if (import.meta.env.DEV) {
-      // In dev there is no IPC trigger yet to re-show the window, so keep
-      // it open. The "Copied" feedback lingers long enough to be obvious.
-      copyTimer = window.setTimeout(() => setCopiedId(undefined), COPY_DEV_LINGER_MS);
+      // No IPC trigger to re-show the window in dev yet, so keep it open
+      // and let the "copied" feedback linger long enough to be obvious.
+      copyTimer = window.setTimeout(finishCopy, COPY_DEV_LINGER_MS);
       return;
     }
 
     copyTimer = window.setTimeout(() => {
       void Window.Hide();
-      window.setTimeout(() => setCopiedId(undefined), 80);
+      window.setTimeout(finishCopy, 80);
     }, COPY_ANIMATION_MS);
   };
 
+  const activateSelected = () => {
+    const current = items()[selectedIndex()];
+    if (current) void copyItem(current.id);
+  };
+
   const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "Escape" && query()) {
+      // Esc with active query clears the search before Wails hides the
+      // window. When the query is already empty, let HideOnEscape do its
+      // job.
+      event.preventDefault();
+      setQuery("");
+      return;
+    }
+
     const list = items();
     if (!list.length) return;
 
-    if (event.key === "ArrowDown") {
+    const isDown = event.key === "ArrowDown" || (event.key === "Tab" && !event.shiftKey);
+    const isUp = event.key === "ArrowUp" || (event.key === "Tab" && event.shiftKey);
+
+    if (isDown) {
       event.preventDefault();
       setSelectedIndex((i) => Math.min(i + 1, list.length - 1));
-    } else if (event.key === "ArrowUp") {
+      return;
+    }
+
+    if (isUp) {
       event.preventDefault();
       setSelectedIndex((i) => Math.max(i - 1, 0));
-    } else if (event.key === "Enter") {
+      return;
+    }
+
+    if (event.key === "Enter") {
       event.preventDefault();
-      const current = list[selectedIndex()];
-      if (current) void copyItem(current.id);
+      activateSelected();
+      return;
+    }
+
+    // Space activates only when the search is empty, so typing is not
+    // interrupted mid-query.
+    if (event.key === " " && !query()) {
+      event.preventDefault();
+      activateSelected();
     }
   };
 
