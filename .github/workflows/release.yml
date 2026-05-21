@@ -77,12 +77,28 @@ jobs:
           VERSION_TAG: ${{ steps.version.outputs.tag }}
         run: task linux:package
 
+      - name: Rename packages to distro-canonical names
+        working-directory: bin
+        env:
+          VERSION: ${{ steps.version.outputs.plain }}
+        run: |
+          # wails3 tool package emits short names (copyd.rpm, copyd.deb).
+          # Rename to the distro conventions documented in README.
+          [[ -f copyd.rpm ]] && mv copyd.rpm "copyd-${VERSION}-1.x86_64.rpm"
+          [[ -f copyd.deb ]] && mv copyd.deb "copyd_${VERSION}_amd64.deb"
+          # AppImage already has arch suffix; add the version.
+          for f in copyd-x86_64.AppImage copyd.AppImage; do
+            [[ -f "$f" ]] && mv "$f" "copyd-${VERSION}-x86_64.AppImage" && break
+          done
+          ls -la
+
       - name: Pack tar.gz
+        env:
+          VERSION: ${{ steps.version.outputs.plain }}
         run: |
           mkdir -p bin/staging
           cp bin/copyd bin/staging/
-          tar -czf bin/copyd-${{ steps.version.outputs.plain }}-linux-amd64.tar.gz \
-            -C bin/staging copyd
+          tar -czf "bin/copyd-${VERSION}-linux-amd64.tar.gz" -C bin/staging copyd
           rm -rf bin/staging
 
       - name: List produced assets
@@ -102,6 +118,15 @@ jobs:
             > release-notes.md
           cat release-notes.md
 
+      - name: Detect prerelease (rc/alpha/beta tags)
+        id: prerelease
+        run: |
+          if [[ "${{ steps.version.outputs.tag }}" =~ -(rc|alpha|beta) ]]; then
+            echo "flag=--prerelease" >> "$GITHUB_OUTPUT"
+          else
+            echo "flag=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -109,6 +134,7 @@ jobs:
           gh release create "${{ steps.version.outputs.tag }}" \
             --title "copyd ${{ steps.version.outputs.tag }}" \
             --notes-file release-notes.md \
+            ${{ steps.prerelease.outputs.flag }} \
             bin/copyd*.rpm \
             bin/copyd*.deb \
             bin/copyd*.AppImage \
