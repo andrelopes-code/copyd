@@ -5,11 +5,11 @@
 	"info": {
 		"0000": {
 			"ProductVersion": "0.1.0",
-			"CompanyName": "My Company",
-			"FileDescription": "A cromenockle application",
-			"LegalCopyright": "© 2026, My Company",
-			"ProductName": "My Product",
-			"Comments": "This is a comment"
+			"CompanyName": "André Lopes",
+			"FileDescription": "Wayland clipboard manager with a spotlight-style launcher",
+			"LegalCopyright": "(c) 2026, André Lopes",
+			"ProductName": "copyd",
+			"Comments": "Linux clipboard manager. Single binary, GTK4 + WebKitGTK 6.0."
 		}
 	}
 }

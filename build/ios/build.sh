@@ -2,8 +2,8 @@
 set -e
 
 # Build configuration
-APP_NAME="cromenockle.exe"
-BUNDLE_ID="com.example.cromenockle"
+APP_NAME="copyd"
+BUNDLE_ID="com.andrelopes.copyd"
 VERSION="0.1.0"
 BUILD_NUMBER="0.1.0"
 BUILD_DIR="build/ios"

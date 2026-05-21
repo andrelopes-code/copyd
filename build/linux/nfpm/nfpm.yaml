@@ -3,28 +3,26 @@
 #
 # The lines below are called `modelines`. See `:help modeline`
 
-name: "cromenockle"
+name: "copyd"
 arch: ${GOARCH}
 platform: "linux"
 version: "0.1.0"
-section: "utils"
-priority: "optional"
+section: "default"
+priority: "extra"
 maintainer: ${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>
-description: "Wayland clipboard manager with a spotlight-style launcher window"
-vendor: "cromenockle"
-homepage: "https://github.com/dreco/cromenockle"
+description: "Wayland clipboard manager with a spotlight-style launcher"
+vendor: "André Lopes"
+homepage: "https://wails.io"
 license: "MIT"
 release: "1"
 
 contents:
-  - src: "./bin/cromenockle"
-    dst: "/usr/bin/cromenockle"
+  - src: "./bin/copyd"
+    dst: "/usr/local/bin/copyd"
   - src: "./build/appicon.png"
-    dst: "/usr/share/icons/hicolor/128x128/apps/cromenockle.png"
-  - src: "./build/linux/cromenockle.desktop"
-    dst: "/usr/share/applications/cromenockle.desktop"
-  - src: "./build/linux/autostart/cromenockle.desktop"
-    dst: "/etc/xdg/autostart/cromenockle.desktop"
+    dst: "/usr/share/icons/hicolor/128x128/apps/copyd.png"
+  - src: "./build/linux/copyd.desktop"
+    dst: "/usr/share/applications/copyd.desktop"
 
 # Default dependencies for the GTK4 + WebKitGTK 6.0 stack (Ubuntu 24.04+ / Debian 13+)
 depends:
