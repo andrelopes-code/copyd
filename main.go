@@ -104,7 +104,6 @@ func main() {
 		BackgroundType:   application.BackgroundTypeTranslucent,
 		BackgroundColour: application.NewRGBA(15, 15, 17, 200),
 		HideOnEscape:     true,
-		HideOnFocusLost:  true,
 		URL:              "/",
 		Windows: application.WindowsWindow{
 			BackdropType: application.Acrylic,
