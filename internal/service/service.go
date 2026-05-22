@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 
 	"copyd/internal/clipboard"
 	"copyd/internal/item"
@@ -42,14 +43,25 @@ func New(st *store.Store, m *clipboard.Monitor, imageDir string) *ClipboardServi
 	}
 }
 
-// ServiceStartup is called by Wails after the application is constructed.
-// We capture the app handle (for event emission) and start the clipboard
-// monitor on a goroutine bound to the service context.
+// ServiceStartup is called by Wails after the application is constructed
+// but before the GTK main loop is running. We wire the backend now (the
+// GdkClipboard backend stores the app handle for later cgo calls), but
+// defer Monitor.Start until ApplicationStarted fires — by then the main
+// loop is live so InvokeSync can dispatch onto it without deadlock.
 func (s *ClipboardService) ServiceStartup(ctx context.Context, _ application.ServiceOptions) error {
 	s.app = application.Get()
 	s.logger = s.app.Logger.With("service", "clipboard")
 
-	go s.monitor.Start(ctx, s.onCapture)
+	s.monitor.SetLogger(s.logger)
+	if err := s.monitor.SetApp(s.app); err != nil {
+		s.logger.Warn("gdk clipboard backend unavailable; will fall back at start", "err", err)
+	}
+
+	s.app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(_ *application.ApplicationEvent) {
+		s.logger.Info("clipboard backend selected", "backend", s.monitor.Backend())
+		go s.monitor.Start(ctx, s.onCapture)
+	})
+
 	return nil
 }
 
@@ -222,7 +234,6 @@ func (s *ClipboardService) Copy(id string) error {
 		return err
 	}
 
-	var writtenHash string
 	switch it.ContentType {
 	case item.TypeImage:
 		if imagePath == "" {
@@ -232,12 +243,11 @@ func (s *ClipboardService) Copy(id string) error {
 		if err != nil {
 			return fmt.Errorf("read image: %w", err)
 		}
-		writtenHash = s.monitor.WriteImage(data)
+		s.monitor.WriteImage(data)
 	default:
-		writtenHash = s.monitor.WriteText(it.Content)
+		s.monitor.WriteText(it.Content)
 	}
 
-	s.monitor.IgnoreNext(writtenHash)
 	if err := s.store.Touch(ctx, id, time.Now().UnixMilli()); err != nil {
 		return err
 	}

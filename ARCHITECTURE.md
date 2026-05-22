@@ -8,7 +8,7 @@
 |---------|---------------|
 | `main` | Wails boot, window construction, single-instance plumbing, version flag. |
 | `internal/store` | SQLite persistence (pure-Go `modernc.org/sqlite`). Schema lives here. |
-| `internal/clipboard` | Wayland clipboard watcher goroutine. Emits new items to the service. |
+| `internal/clipboard` | Clipboard watcher goroutine. Default Linux backend is GTK4 `GdkClipboard` via cgo — reactive (driven by the `changed` signal), runs inside the same GTK connection Wails has already initialised, no extra Wayland clients. Falls back to libxcb-backed `golang.design/x/clipboard` on X11 sessions when the Wails app handle is unavailable. Emits new items to the service; writes go through the same in-process API. |
 | `internal/item` | Domain model (`Item`, content kinds, timestamps). |
 | `internal/service` | Wails-exposed service. Methods here become the frontend API surface. |
 

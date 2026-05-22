@@ -48,7 +48,9 @@ copyd --version
 
 ### Runtime dependencies
 
-GTK4 + WebKitGTK 6.0. The RPM/DEB pull these in automatically. For AppImage / tar.gz on Fedora: `sudo dnf install gtk4 webkitgtk6.0`. On Ubuntu 24.04+: `sudo apt install libgtk-4-1 libwebkitgtk-6.0-4`.
+GTK4 + WebKitGTK 6.0 for the window and the clipboard. The RPM/DEB pull these in automatically. For AppImage / tar.gz on Fedora: `sudo dnf install gtk4 webkitgtk6.0`. On Ubuntu 24.04+: `sudo apt install libgtk-4-1 libwebkitgtk-6.0-4`.
+
+> The clipboard backend talks to GTK4's `GdkClipboard` in-process via cgo — same connection the window uses. Capture is reactive (driven by the GTK `changed` signal, not polling), and no extra Wayland clients are ever created, so the compositor sees a single stable copyd entry and the dock stays quiet. On an X11 session the libxcb-backed `golang.design/x/clipboard` is the fallback.
 
 ## Usage
 
