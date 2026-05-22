@@ -96,7 +96,7 @@ const App: Component = () => {
   onCleanup(() => window.removeEventListener("keydown", handleKeyDown));
 
   return (
-    <div class="flex h-full w-full flex-col bg-background">
+    <div class="app-shell flex h-full w-full flex-col">
       <TitleBar value={store.query()} onInput={store.setQuery} />
       <main class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
         <Show

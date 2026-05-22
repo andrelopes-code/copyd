@@ -6,18 +6,35 @@
 @import "@fontsource/ibm-plex-mono/400.css";
 
 @theme {
-  --color-background: rgba(13, 13, 15, 0.92);
+  /* Surface stack — building a glass/obsidian feel on top of the
+     Wails translucent window. The deepest tone is near-black with a
+     micro blue cast so the room behind doesn't bleed too warm. */
+  --color-background: rgba(8, 8, 12, 0.86);
   --color-surface: rgba(255, 255, 255, 0.035);
-  --color-surface-hover: rgba(255, 255, 255, 0.03);
-  --color-surface-selected: rgba(255, 255, 255, 0.08);
-  --color-border: rgba(255, 255, 255, 0.07);
-  --color-border-strong: rgba(255, 255, 255, 0.12);
+  --color-surface-hover: rgba(255, 255, 255, 0.045);
+  --color-surface-selected: rgba(255, 255, 255, 0.06);
+
+  --color-border: rgba(255, 255, 255, 0.06);
+  --color-border-strong: rgba(255, 255, 255, 0.11);
+
   --color-foreground: #ededee;
-  --color-muted: rgba(235, 235, 245, 0.6);
-  --color-muted-2: rgba(235, 235, 245, 0.35);
+  --color-muted: rgba(235, 235, 245, 0.62);
+  --color-muted-2: rgba(235, 235, 245, 0.36);
   --color-muted-3: rgba(235, 235, 245, 0.22);
-  --color-accent: #5562d8;
+
+  /* Brand accent — kept close to the legacy violet-blue so the copy
+     animation still composes against it. */
+  --color-accent: #6b7af0;
+  --color-accent-soft: rgba(107, 122, 240, 0.18);
   --color-danger: #e06b6b;
+
+  /* Iris spectrum — five evenly-spaced stops around the search halo.
+     Each stop is roughly the same value/chroma; only hue moves. */
+  --iris-1: #5d6bf0; /* indigo */
+  --iris-2: #a163e8; /* violet */
+  --iris-3: #e86397; /* magenta */
+  --iris-4: #e8a463; /* amber */
+  --iris-5: #63d8c5; /* cyan */
 
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -52,7 +69,7 @@ textarea {
 }
 
 ::selection {
-  background-color: rgba(94, 106, 210, 0.35);
+  background-color: rgba(107, 122, 240, 0.34);
   color: var(--color-foreground);
 }
 
@@ -95,6 +112,87 @@ textarea {
   background: transparent;
 }
 
+/* ---------- Window atmosphere ----------
+   Two pinned radial wells — one indigo top-right, one cyan
+   bottom-left — give the panel a directional "light source" feel
+   without distracting from the list. Both sit far below content,
+   well under 10% opacity, so they read as atmosphere not decoration. */
+
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 100% 0%,
+      rgba(107, 122, 240, 0.12),
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 60% 50% at 0% 100%,
+      rgba(99, 216, 197, 0.07),
+      transparent 60%
+    ),
+    linear-gradient(180deg, #0a0a0e 0%, #06060a 100%);
+}
+
+/* Hairline-thin spectrum thread that sits exactly on the header
+   seam. Fades to transparent at both edges — reads as a brand
+   anchor without feeling like a banner. */
+.spectrum-hairline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(107, 122, 240, 0.35) 18%,
+    rgba(161, 99, 232, 0.42) 38%,
+    rgba(232, 99, 151, 0.42) 58%,
+    rgba(99, 216, 197, 0.35) 82%,
+    transparent 100%
+  );
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* ---------- Search slot ----------
+   The input is treated as a slot recessed into the header surface:
+   - A dark fill that sits a touch deeper than the header bg.
+   - A hairline inner border + a 1px top highlight giving the rim the
+     thinnest possible "lip" so it reads as carved, not painted on.
+   - A subtle drop shadow under (below the slot) for ambient depth.
+
+   Focus replaces the neutral border with a single accent ring and
+   blooms a soft indigo glow around the slot. No rainbow, no rotation
+   — one color, one moment. */
+
+.search-pill {
+  position: relative;
+  isolation: isolate;
+  background-color: rgba(6, 6, 10, 0.55);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    0 1px 1px rgba(0, 0, 0, 0.25);
+  transition:
+    background-color 280ms ease,
+    box-shadow 360ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.search-pill:focus-within {
+  background-color: rgba(8, 8, 14, 0.7);
+  box-shadow:
+    inset 0 0 0 1px rgba(107, 122, 240, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45),
+    0 0 0 3px rgba(107, 122, 240, 0.08),
+    0 0 22px -4px rgba(107, 122, 240, 0.42);
+}
+
 /* ---------- Copy feedback ----------
    Cores e bg sao controlados por `transition-colors` nas spans do row/icon/text,
    entao entram e saem suavemente quando a classe `copied` flipa.
@@ -109,9 +207,9 @@ textarea {
 }
 
 @keyframes copy-row-border {
-  0%   { box-shadow: inset 0 0 0 1px rgba(94, 106, 210, 0); }
-  22%  { box-shadow: inset 0 0 0 1px rgba(94, 106, 210, 0.65); }
-  100% { box-shadow: inset 0 0 0 1px rgba(94, 106, 210, 0); }
+  0%   { box-shadow: inset 0 0 0 1px rgba(107, 122, 240, 0); }
+  22%  { box-shadow: inset 0 0 0 1px rgba(107, 122, 240, 0.7); }
+  100% { box-shadow: inset 0 0 0 1px rgba(107, 122, 240, 0); }
 }
 
 .copy-row::after {
@@ -123,8 +221,8 @@ textarea {
   width: 55%;
   background: radial-gradient(
     ellipse 55% 70% at center,
-    rgba(94, 106, 210, 0.55) 0%,
-    rgba(94, 106, 210, 0.22) 50%,
+    rgba(107, 122, 240, 0.6) 0%,
+    rgba(107, 122, 240, 0.24) 50%,
     transparent 78%
   );
   transform: translateX(-110%);
@@ -139,6 +237,59 @@ textarea {
   14%  { opacity: 1; }
   86%  { opacity: 1; }
   100% { transform: translateX(220%); opacity: 0; }
+}
+
+/* ---------- Row selected: gradient wash + left rail ----------
+   The selected row gets a contained accent fill that fades to the
+   right, plus a 2px vertical rail with a vertical gradient. No
+   geometry changes (no expansion, no scale) — only color. */
+
+.row-selected {
+  background: linear-gradient(
+    90deg,
+    rgba(107, 122, 240, 0.14) 0%,
+    rgba(107, 122, 240, 0.04) 55%,
+    rgba(255, 255, 255, 0.025) 100%
+  );
+}
+
+.row-rail {
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  width: 2px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    var(--iris-2) 0%,
+    var(--iris-1) 50%,
+    var(--iris-5) 100%
+  );
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.row-rail-muted {
+  background: linear-gradient(
+    180deg,
+    rgba(107, 122, 240, 0.55) 0%,
+    rgba(107, 122, 240, 0.35) 100%
+  );
+}
+
+/* ---------- Section header divider ----------
+   A short fading line trailing the label — gives the header
+   architectural weight without competing with content. */
+
+.section-line {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 100%
+  );
+  flex: 1;
 }
 
 /* ---------- Quick Look ----------

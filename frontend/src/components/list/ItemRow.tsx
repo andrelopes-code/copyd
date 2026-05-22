@@ -23,6 +23,7 @@ const MONO_TYPES: ReadonlySet<ContentType> = new Set([
 
 const ItemRow: Component<ItemRowProps> = (props) => {
   const isMono = () => MONO_TYPES.has(props.item.contentType);
+  const showRail = () => props.item.pinned || props.selected;
 
   return (
     <div
@@ -31,19 +32,22 @@ const ItemRow: Component<ItemRowProps> = (props) => {
       aria-selected={props.selected}
       onClick={props.onActivate}
       class={cn(
-        "relative flex h-9 shrink-0 cursor-pointer items-center gap-3 overflow-hidden rounded-md pl-3 pr-3",
-        "transition-colors duration-300 ease-out outline-accent",
+        "relative flex h-9 shrink-0 cursor-pointer items-center gap-3 overflow-hidden rounded-md pl-3.5 pr-3",
+        "transition-colors duration-300 ease-out",
         props.copied
-          ? "copy-row bg-[rgba(94,106,210,0.16)]"
+          ? "copy-row bg-[rgba(107,122,240,0.18)]"
           : props.selected
-            ? "bg-surface-selected outline-1 outline-offset-2"
+            ? "row-selected"
             : "hover:bg-surface-hover",
       )}
     >
-      <Show when={props.item.pinned}>
+      <Show when={showRail()}>
         <span
           aria-hidden="true"
-          class="pointer-events-none absolute left-1 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-full bg-accent"
+          class={cn(
+            "row-rail",
+            !props.selected && !props.copied && "row-rail-muted",
+          )}
         />
       </Show>
 
@@ -62,28 +66,34 @@ const ItemRow: Component<ItemRowProps> = (props) => {
 
       <span
         class={cn(
-          "min-w-0 flex-1 truncate text-sm transition-colors duration-300 ease-out",
-          isMono() && "font-mono text-[13px]",
-          props.copied || props.selected ? "text-foreground" : "text-muted",
+          "min-w-0 flex-1 truncate text-[13.5px] tracking-[0.005em] transition-colors duration-300 ease-out",
+          isMono() && "font-mono text-[12.5px] tracking-normal",
+          props.copied
+            ? "text-foreground"
+            : props.selected
+              ? "text-foreground"
+              : "text-muted",
         )}
       >
         {props.item.preview}
       </span>
 
-      <span class="grid shrink-0 text-right text-xs tabular-nums leading-none">
+      <span class="grid shrink-0 text-right text-[11px] tabular-nums leading-none">
         <span
           class={cn(
-            "col-start-1 row-start-1 transition-all duration-300 ease-out text-muted-2",
+            "col-start-1 row-start-1 transition-all duration-300 ease-out",
             props.copied
               ? "opacity-0 -translate-x-2"
-              : "opacity-100 translate-x-0",
+              : props.selected
+                ? "opacity-100 translate-x-0 text-muted"
+                : "opacity-100 translate-x-0 text-muted-3",
           )}
         >
           {formatRelativeTime(props.item.lastUsedAt)}
         </span>
         <span
           class={cn(
-            "col-start-1 row-start-1 font-medium text-accent transition-all duration-300 ease-out",
+            "col-start-1 row-start-1 font-medium uppercase tracking-[0.08em] text-accent transition-all duration-300 ease-out",
             props.copied
               ? "opacity-100 translate-x-0"
               : "opacity-0 translate-x-2",
@@ -106,8 +116,8 @@ const RowGlyph: Component<{ item: ClipboardItem }> = (props) => {
           fallback={
             <Dynamic
               component={iconForContentType(props.item.contentType)}
-              size={16}
-              strokeWidth={3}
+              size={14}
+              strokeWidth={2.5}
             />
           }
         >
@@ -116,7 +126,7 @@ const RowGlyph: Component<{ item: ClipboardItem }> = (props) => {
       }
     >
       <span
-        class="h-3 w-3 rounded-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)]"
+        class="h-3.5 w-3.5 rounded-[3px] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.22),0_1px_2px_rgba(0,0,0,0.45)]"
         style={{ "background-color": props.item.content }}
       />
     </Show>
@@ -131,15 +141,15 @@ const ImageGlyph: Component<{ id: string }> = (props) => {
       fallback={
         <Dynamic
           component={iconForContentType("image")}
-          size={16}
-          strokeWidth={3}
+          size={14}
+          strokeWidth={2.5}
         />
       }
     >
       <img
         src={imageDataUrl(data()!)}
         alt=""
-        class="h-4 w-4 rounded-sm object-cover shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)]"
+        class="h-4 w-4 rounded-[3px] object-cover shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)]"
         draggable={false}
       />
     </Show>

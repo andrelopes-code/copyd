@@ -37,22 +37,23 @@ const QuickLook: Component<QuickLookProps> = (props) => {
   };
 
   return (
-    <div class="quicklook absolute inset-0 z-20 flex flex-col bg-background/80 backdrop-blur-md">
-      <div class="flex h-9 shrink-0 items-center justify-between border-b border-border/60 px-4">
-        <span class="flex items-center gap-2 text-xs text-muted-2">
+    <div class="quicklook absolute inset-0 z-20 flex flex-col bg-[rgba(8,8,12,0.82)] backdrop-blur-xl">
+      <div class="relative flex h-10 shrink-0 items-center justify-between px-4">
+        <span class="flex items-center gap-2 text-[11px] text-muted-2">
           <Dynamic
             component={iconForContentType(props.item.contentType)}
-            size={12}
+            size={11}
             strokeWidth={2.5}
             class="text-muted-3"
           />
-          <span class="font-medium uppercase tracking-[0.08em]">
+          <span class="font-medium uppercase tracking-[0.1em]">
             {metaLine()}
           </span>
         </span>
-        <span class="text-[10px] uppercase tracking-[0.1em] text-muted-3">
+        <span class="text-[10px] uppercase tracking-[0.12em] text-muted-3">
           → / Esc to close
         </span>
+        <div class="spectrum-hairline bottom-0" aria-hidden="true" />
       </div>
 
       <div class="flex min-h-0 flex-1 overflow-hidden">
