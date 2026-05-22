@@ -14,11 +14,22 @@ interface ItemListProps {
 
 const ItemList: Component<ItemListProps> = (props) => {
   const rowRefs: HTMLDivElement[] = [];
+  let containerRef: HTMLDivElement | undefined;
 
   createEffect(() => {
     const el = rowRefs[props.selectedIndex];
     if (el) {
       el.scrollIntoView({ block: "nearest" });
+    }
+  });
+
+  // Copy → snap the list to the top immediately. The freshly copied
+  // item will be the new head once the store refreshes, so the user
+  // sees it land at the top instead of returning to wherever they had
+  // scrolled.
+  createEffect(() => {
+    if (props.copiedId !== undefined && containerRef) {
+      containerRef.scrollTop = 0;
     }
   });
 
@@ -40,6 +51,7 @@ const ItemList: Component<ItemListProps> = (props) => {
 
   return (
     <div
+      ref={containerRef}
       role="listbox"
       class="flex min-h-0 py-2 scrollbar-none! flex-1 flex-col gap-0.5 overflow-y-auto scroll-pt-9 scroll-pb-2 px-2"
     >
