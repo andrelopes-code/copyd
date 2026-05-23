@@ -85,25 +85,63 @@ func DetectType(content string) ContentType {
 	return TypeText
 }
 
-// TextPreview returns the first non-blank line of content, rune-safely
-// truncated. Items copied with leading blank lines used to render with an
-// empty preview because the first line itself was "".
+// TextPreview returns a single-line stitched preview of the content. Each
+// non-blank line gets trimmed and joined with a "↵" glyph so the user can
+// see structure past the first line of multiline payloads — previously
+// items like "TITLE\nimportant body" rendered as just "TITLE", hiding the
+// part that actually mattered. The result is rune-safely capped at
+// previewMaxLen.
 func TextPreview(content string) string {
-	var line string
+	const sep = " ↵ "
+	sepLen := utf8.RuneCountInString(sep)
+
+	var buf strings.Builder
+	runes := 0
+
 	for l := range strings.SplitSeq(content, "\n") {
-		if t := strings.TrimSpace(l); t != "" {
-			line = t
-			break
+		t := strings.TrimSpace(l)
+		if t == "" {
+			continue
 		}
+
+		addSep := buf.Len() > 0
+		lineRunes := utf8.RuneCountInString(t)
+		cost := lineRunes
+		if addSep {
+			cost += sepLen
+		}
+
+		if runes+cost <= previewMaxLen {
+			if addSep {
+				buf.WriteString(sep)
+				runes += sepLen
+			}
+			buf.WriteString(t)
+			runes += lineRunes
+			continue
+		}
+
+		avail := previewMaxLen - runes
+		if addSep {
+			if avail < sepLen+4 {
+				break
+			}
+			buf.WriteString(sep)
+			runes += sepLen
+			avail -= sepLen
+		}
+		if avail > 0 {
+			r := []rune(t)
+			if avail > len(r) {
+				avail = len(r)
+			}
+			buf.WriteString(string(r[:avail]))
+			buf.WriteRune('…')
+		}
+		break
 	}
-	if line == "" {
-		return ""
-	}
-	if utf8.RuneCountInString(line) <= previewMaxLen {
-		return line
-	}
-	runes := []rune(line)
-	return string(runes[:previewMaxLen]) + "…"
+
+	return buf.String()
 }
 
 func ImagePreview(width, height int) string {
