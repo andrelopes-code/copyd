@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"log/slog"
 	"runtime/cgo"
+	"sync/atomic"
 	"unsafe"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -33,9 +34,19 @@ import (
 // reads/writes happen in-process — no `wl-paste` or `wl-copy` subprocess
 // is ever launched, so the compositor sees no extra Wayland clients and
 // the dock stays quiet.
+//
+// selfWritePending counts self-initiated writes whose "changed" signal
+// has not yet been consumed. When we set the clipboard ourselves, GDK
+// fires "changed" and our reader tries to round-trip the same payload
+// back through the content provider we just installed; for image-sized
+// blobs the stream serializer deadlocks the main thread (writer waits
+// for reader to drain, reader waits for writer to fill). Draining this
+// counter on the next notify lets us skip the readback entirely for
+// self-writes. IgnoreNext still acts as a hash-based safety net.
 type gdkBackend struct {
-	app    *application.App
-	notify chan struct{}
+	app              *application.App
+	notify           chan struct{}
+	selfWritePending atomic.Int32
 }
 
 func newGdkBackend(app *application.App) (*gdkBackend, error) {
@@ -89,6 +100,12 @@ func (b *gdkBackend) start(ctx context.Context, dispatch func([]byte, Format), l
 		case <-ctx.Done():
 			return
 		case <-b.notify:
+			// Drain pending self-writes — if any are outstanding, this
+			// notify is ours, and reading back our own content provider
+			// would deadlock the main thread on image payloads.
+			if b.selfWritePending.Swap(0) > 0 {
+				continue
+			}
 			if text, ok := b.readText(); ok && text != "" {
 				h := hashBytes([]byte(text))
 				if h != lastTextHash {
@@ -141,12 +158,14 @@ func (b *gdkBackend) readPNG() ([]byte, bool) {
 
 func (b *gdkBackend) writeText(s string) error {
 	var rc C.int
+	b.selfWritePending.Add(1)
 	application.InvokeSync(func() {
 		cs := C.CString(s)
 		defer C.free(unsafe.Pointer(cs))
 		rc = C.copyd_clipboard_set_text(cs, C.size_t(len(s)))
 	})
 	if rc != 0 {
+		b.selfWritePending.Add(-1)
 		return fmt.Errorf("gdk_clipboard_set_text: rc=%d", int(rc))
 	}
 	return nil
@@ -157,6 +176,7 @@ func (b *gdkBackend) writeImage(data []byte) error {
 		return errors.New("gdk write image: empty payload")
 	}
 	var rc C.int
+	b.selfWritePending.Add(1)
 	application.InvokeSync(func() {
 		rc = C.copyd_clipboard_set_png(
 			(*C.uchar)(unsafe.Pointer(&data[0])),
@@ -164,6 +184,7 @@ func (b *gdkBackend) writeImage(data []byte) error {
 		)
 	})
 	if rc != 0 {
+		b.selfWritePending.Add(-1)
 		return fmt.Errorf("gdk_clipboard_set_png: rc=%d", int(rc))
 	}
 	return nil

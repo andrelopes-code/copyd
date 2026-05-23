@@ -152,17 +152,32 @@ int copyd_clipboard_set_text(const char *text, size_t len) {
 }
 
 int copyd_clipboard_set_png(const unsigned char *data, size_t len) {
+    // Publishing an image via a generic image/png bytes provider used to
+    // freeze the app: after gdk_clipboard_set_content fires the "changed"
+    // signal our monitor goroutine runs gdk_clipboard_read_async for
+    // image/png against the bytes-stream provider, which deadlocks on
+    // Wayland. Building a GdkTexture and using the dedicated
+    // gdk_clipboard_set_texture API sidesteps the stream dance entirely
+    // — the texture advertises every format GDK can serialize it into,
+    // and the readback path is the well-tested texture serializer.
     GdkDisplay *display = gdk_display_get_default();
     if (display == NULL) return 1;
     GdkClipboard *clipboard = gdk_display_get_clipboard(display);
     if (clipboard == NULL) return 2;
-    GBytes             *bytes    = g_bytes_new(data, len);
-    GdkContentProvider *provider =
-        gdk_content_provider_new_for_bytes("image/png", bytes);
+
+    GBytes *bytes = g_bytes_new(data, len);
+    GError *error = NULL;
+    GdkTexture *texture = gdk_texture_new_from_bytes(bytes, &error);
     g_bytes_unref(bytes);
-    gboolean ok = gdk_clipboard_set_content(clipboard, provider);
-    g_object_unref(provider);
-    return ok ? 0 : 3;
+    if (error != NULL) {
+        g_error_free(error);
+        return 3;
+    }
+    if (texture == NULL) return 4;
+
+    gdk_clipboard_set_texture(clipboard, texture);
+    g_object_unref(texture);
+    return 0;
 }
 
 // ---- memory release ----
