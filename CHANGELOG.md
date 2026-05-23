@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-23
+
+### Changed
+- Copying an item now dismisses the window immediately. The previous ~620ms row animation that gated the hide is gone, so the launcher gets out of the way the instant you pick an item — the clipboard is still written while the window holds focus, as Wayland requires.
+
+### Fixed
+- The search input is now focused every time the window appears, not just on first launch. `autofocus` only fires on the initial render, so re-showing the window via the global shortcut (or after `--hidden` autostart) previously left the input unfocused; the window now emits a `window:shown` event that re-focuses the field.
+
 ## [0.2.0] - 2026-05-23
 
 ### Added
