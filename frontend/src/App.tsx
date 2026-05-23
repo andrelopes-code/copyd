@@ -1,10 +1,4 @@
-import {
-  Show,
-  createEffect,
-  createSignal,
-  onCleanup,
-  type Component,
-} from "solid-js";
+import { Show, createSignal, onCleanup, type Component } from "solid-js";
 
 import ErrorState from "@components/feedback/ErrorState";
 import ErrorToast from "@components/feedback/ErrorToast";
@@ -18,15 +12,17 @@ const App: Component = () => {
   const store = createClipboardStore();
   const [peekOpen, setPeekOpen] = createSignal(false);
 
-  // A successful copy hides the window — close the peek so it doesn't
-  // linger when the window shows back up.
-  createEffect(() => {
-    if (store.copiedId() !== undefined) setPeekOpen(false);
-  });
+  // Copy is the user's final intent: close any open peek so the window
+  // returns to a clean state, then hand off to the store (which hides the
+  // window in production).
+  const copy = (id: string) => {
+    setPeekOpen(false);
+    void store.copyItem(id);
+  };
 
   const activateSelected = () => {
     const current = store.currentItem();
-    if (current) void store.copyItem(current.id);
+    if (current) copy(current.id);
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -130,7 +126,7 @@ const App: Component = () => {
               items={store.items()}
               selectedIndex={store.selectedIndex()}
               copiedId={store.copiedId()}
-              onActivate={(id) => void store.copyItem(id)}
+              onActivate={copy}
               showSections={!store.query()}
             />
           </Show>

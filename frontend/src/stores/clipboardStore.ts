@@ -6,13 +6,11 @@ import { ClipboardService } from "@bindings/copyd/internal/service";
 import type { ClipboardItem } from "@app-types/item";
 
 const CLIPBOARD_CHANGED = "clipboard:changed";
-// Time the "copied" state stays applied before the window hides in prod. Long
-// enough for the spotlight to cross the row and the border glow to peak.
-const COPY_ANIMATION_MS = 620;
-// In dev there is no IPC trigger to re-show the window, so the "copied" state
-// lingers long enough to see intro + a clear hold + outro back to baseline.
+// In dev there is no IPC trigger to re-show the window, so instead of hiding
+// we keep the "copied" state long enough to watch the row animation play out.
 const COPY_DEV_LINGER_MS = 1500;
-// Small tail after Window.Hide() so the copy state resets before the next show.
+// Small tail after Window.Hide() so the copying guard clears once the window
+// is gone, keeping the next show clean.
 const COPY_HIDE_TAIL_MS = 80;
 
 export function createClipboardStore() {
@@ -87,18 +85,21 @@ export function createClipboardStore() {
     }
 
     setActionError(undefined);
-    setCopiedId(id);
     clearCopyTimer();
 
+    // Dev keeps the window open (no IPC to re-show it), so play the copied
+    // animation as a development affordance and let it settle.
     if (import.meta.env.DEV) {
+      setCopiedId(id);
       copyTimer = window.setTimeout(finishCopy, COPY_DEV_LINGER_MS);
       return;
     }
 
-    copyTimer = window.setTimeout(() => {
-      void Window.Hide();
-      copyTimer = window.setTimeout(finishCopy, COPY_HIDE_TAIL_MS);
-    }, COPY_ANIMATION_MS);
+    // The clipboard write must land while the window still holds focus —
+    // Wayland rejects set_selection without a focused serial — so we hide
+    // only after Copy resolves.
+    void Window.Hide();
+    copyTimer = window.setTimeout(finishCopy, COPY_HIDE_TAIL_MS);
   };
 
   onCleanup(clearCopyTimer);
