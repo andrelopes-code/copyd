@@ -127,7 +127,6 @@ func TextPreview(content string) string {
 				break
 			}
 			buf.WriteString(sep)
-			runes += sepLen
 			avail -= sepLen
 		}
 		if avail > 0 {
