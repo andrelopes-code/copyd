@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-05-23
+
+### Added
+- Halo-well empty state with two variants — the initial "no items captured yet" view and a "no match" view that echoes the query back as a mono chip.
+- Use-count chip on each row (`N×`) when an item has been re-copied, so recurring clips are recognisable at a glance.
+- Per-type icon tints — URL (cyan), command (green), JSON (amber), email (violet), path (indigo), multiline (lilac). Quiet at rest, brighter when the row is selected.
+
+### Changed
+- Chrome redesign: recessed-slot search input with indigo focus glow, gradient row rail and accent wash on the selected item, section headers with status dot and trailing fade line, dual radial wells in the window corners for atmosphere.
+- Multiline previews now stitch every non-blank line with a `↵` glyph (capped at 200 runes) instead of dropping all but the first line.
+- Copy snaps the list scroll back to the top so the just-copied item is visible the next time the window opens.
+
+### Fixed
+- Copying an image back to the clipboard no longer freezes the app. The `"changed"` signal fired by our own write was deadlocking the GTK main thread on the round-trip through our content provider; self-writes now skip the readback entirely, and image content is published via the canonical `GdkTexture` API.
+- Wayland clipboard capture is driven by an in-process `GdkClipboard` listener — no more `wl-paste` subprocess flickering the dock.
+- Release pipeline no longer races `go mod tidy` against `npm install` walking `frontend/node_modules`; `install:frontend:deps` is now a hard prerequisite of the tidy step.
+- `release.yml` accepts a `workflow_dispatch` trigger for dry-run validation against `main` without committing to a tag.
+
 ## [0.1.0] - 2026-05-21
 
 First public release. Rebranded from the internal `cromenockle` prototype.
@@ -27,5 +45,6 @@ First public release. Rebranded from the internal `cromenockle` prototype.
 - No settings file yet; everything lives under `${XDG_DATA_HOME}/copyd/`.
 - Built on Wails v3 alpha — minor breakage between Wails alphas is possible.
 
-[Unreleased]: https://github.com/andrelopes-code/copyd/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/andrelopes-code/copyd/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/andrelopes-code/copyd/releases/tag/v0.2.0
 [0.1.0]: https://github.com/andrelopes-code/copyd/releases/tag/v0.1.0
