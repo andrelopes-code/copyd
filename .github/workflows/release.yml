@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag to simulate (e.g. v0.1.2). Build runs end-to-end; no GitHub release is created.'
+        required: false
+        default: 'v0.0.0-dryrun'
 
 permissions:
   contents: write
@@ -24,7 +30,11 @@ jobs:
       - name: Resolve version
         id: version
         run: |
-          VERSION_TAG="${GITHUB_REF_NAME}"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION_TAG="${{ inputs.version }}"
+          else
+            VERSION_TAG="${GITHUB_REF_NAME}"
+          fi
           VERSION="${VERSION_TAG#v}"
           echo "tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
           echo "plain=${VERSION}" >> "$GITHUB_OUTPUT"
@@ -128,6 +138,7 @@ jobs:
           fi
 
       - name: Create GitHub release
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
