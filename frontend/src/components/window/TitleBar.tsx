@@ -1,6 +1,10 @@
 import { Search, X } from "lucide-solid";
-import type { Component } from "solid-js";
-import { Window } from "@wailsio/runtime";
+import { onCleanup, onMount, type Component } from "solid-js";
+import { Events, Window } from "@wailsio/runtime";
+
+// Emitted by the Go side whenever the window is shown (e.g. via the global
+// shortcut). autofocus only fires on the first render, so we re-focus here.
+const WINDOW_SHOWN = "window:shown";
 
 interface TitleBarProps {
   value: string;
@@ -8,6 +12,16 @@ interface TitleBarProps {
 }
 
 const TitleBar: Component<TitleBarProps> = (props) => {
+  let inputRef: HTMLInputElement | undefined;
+
+  const focusSearch = () => inputRef?.focus();
+
+  onMount(() => {
+    focusSearch();
+    const unsubscribe = Events.On(WINDOW_SHOWN, focusSearch);
+    onCleanup(unsubscribe);
+  });
+
   return (
     <header
       class="relative flex h-12 shrink-0 items-center gap-2.5 px-3"
@@ -24,8 +38,8 @@ const TitleBar: Component<TitleBarProps> = (props) => {
           aria-hidden="true"
         />
         <input
+          ref={inputRef}
           type="text"
-          autofocus
           spellcheck={false}
           autocomplete="off"
           placeholder="Search"
