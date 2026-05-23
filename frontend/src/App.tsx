@@ -113,6 +113,8 @@ const App: Component = () => {
             when={store.items().length > 0}
             fallback={
               <EmptyState
+                variant={store.query() ? "no-match" : "initial"}
+                query={store.query()}
                 title={
                   store.query() ? "No matching items" : "No items captured yet"
                 }
