@@ -1,8 +1,18 @@
-import { createResource, Show, type Component } from "solid-js";
+import {
+  createMemo,
+  createResource,
+  For,
+  Show,
+  type Component,
+  type JSX,
+} from "solid-js";
 import { Dynamic } from "solid-js/web";
 
 import { cn } from "@lib/cn";
-import { iconForContentType } from "@lib/contentTypeIcon";
+import {
+  iconForContentType,
+  tintForContentType,
+} from "@lib/contentTypeIcon";
 import { formatRelativeTime } from "@lib/formatTime";
 import { getImageData, imageDataUrl } from "@lib/imageCache";
 import type { ClipboardItem, ContentType } from "@app-types/item";
@@ -21,9 +31,29 @@ const MONO_TYPES: ReadonlySet<ContentType> = new Set([
   "command",
 ]);
 
+const PREVIEW_SEP = " ↵ ";
+
 const ItemRow: Component<ItemRowProps> = (props) => {
   const isMono = () => MONO_TYPES.has(props.item.contentType);
   const showRail = () => props.item.pinned || props.selected;
+
+  // Type tint for the icon. At rest the hue sits at low alpha so it
+  // reads as a quiet signal; selected bumps near-opaque; copied yields
+  // to the accent flash and we skip the tint entirely.
+  const iconStyle = (): JSX.CSSProperties | undefined => {
+    if (props.copied) return undefined;
+    const alpha = props.selected ? 0.95 : 0.6;
+    const color = tintForContentType(props.item.contentType, alpha);
+    return color ? { color } : undefined;
+  };
+
+  // If the backend stitched the preview, split on the separator so we
+  // can dim the ↵ glyphs visually — they're hints, not content.
+  const previewSegments = createMemo<string[]>(() =>
+    props.item.preview.includes(PREVIEW_SEP)
+      ? props.item.preview.split(PREVIEW_SEP)
+      : [props.item.preview],
+  );
 
   return (
     <div
@@ -60,6 +90,7 @@ const ItemRow: Component<ItemRowProps> = (props) => {
               ? "text-foreground"
               : "text-muted-2",
         )}
+        style={iconStyle()}
       >
         <RowGlyph item={props.item} />
       </span>
@@ -75,33 +106,61 @@ const ItemRow: Component<ItemRowProps> = (props) => {
               : "text-muted",
         )}
       >
-        {props.item.preview}
+        <For each={previewSegments()}>
+          {(part, i) => (
+            <>
+              <Show when={i() > 0}>
+                <span
+                  class="mx-1.5 select-none text-muted-3 opacity-70"
+                  aria-hidden="true"
+                >
+                  ↵
+                </span>
+              </Show>
+              {part}
+            </>
+          )}
+        </For>
       </span>
 
-      <span class="grid shrink-0 text-right text-[11px] tabular-nums leading-none">
-        <span
-          class={cn(
-            "col-start-1 row-start-1 transition-all duration-300 ease-out",
-            props.copied
-              ? "opacity-0 -translate-x-2"
-              : props.selected
-                ? "opacity-100 translate-x-0 text-muted"
-                : "opacity-100 translate-x-0 text-muted-3",
-          )}
-        >
-          {formatRelativeTime(props.item.lastUsedAt)}
+      <div class="flex shrink-0 items-center gap-2.5">
+        <Show when={props.item.useCount > 1 && !props.copied}>
+          <span
+            class={cn(
+              "text-[10.5px] tabular-nums leading-none transition-colors duration-300 ease-out",
+              props.selected ? "text-muted-2" : "text-muted-3",
+            )}
+            title={`Copied ${props.item.useCount} times`}
+          >
+            {props.item.useCount}×
+          </span>
+        </Show>
+
+        <span class="grid text-right text-[11px] tabular-nums leading-none">
+          <span
+            class={cn(
+              "col-start-1 row-start-1 transition-all duration-300 ease-out",
+              props.copied
+                ? "opacity-0 -translate-x-2"
+                : props.selected
+                  ? "opacity-100 translate-x-0 text-muted"
+                  : "opacity-100 translate-x-0 text-muted-3",
+            )}
+          >
+            {formatRelativeTime(props.item.lastUsedAt)}
+          </span>
+          <span
+            class={cn(
+              "col-start-1 row-start-1 font-medium uppercase tracking-[0.08em] text-accent transition-all duration-300 ease-out",
+              props.copied
+                ? "opacity-100 translate-x-0"
+                : "opacity-0 translate-x-2",
+            )}
+          >
+            Copied
+          </span>
         </span>
-        <span
-          class={cn(
-            "col-start-1 row-start-1 font-medium uppercase tracking-[0.08em] text-accent transition-all duration-300 ease-out",
-            props.copied
-              ? "opacity-100 translate-x-0"
-              : "opacity-0 translate-x-2",
-          )}
-        >
-          Copied
-        </span>
-      </span>
+      </div>
     </div>
   );
 };
