@@ -26,6 +26,11 @@ const (
 	appUniqueID  = "com.andrelopes.copyd"
 	windowWidth  = 720
 	windowHeight = 480
+
+	// eventWindowShown tells the frontend the window just became visible so
+	// it can re-focus the search input. The input's autofocus attribute only
+	// fires on the first DOM render, never when a hidden window is shown again.
+	eventWindowShown = "window:shown"
 )
 
 // version is set via -ldflags at build time. See Taskfile.yml.
@@ -65,6 +70,7 @@ func main() {
 	svc := service.New(st, monitor, imageDir)
 
 	var window *application.WebviewWindow
+	var app *application.App
 
 	toggleWindow := func() {
 		if window == nil {
@@ -76,9 +82,10 @@ func main() {
 		}
 		window.Show()
 		window.Focus()
+		app.Event.Emit(eventWindowShown)
 	}
 
-	app := application.New(application.Options{
+	app = application.New(application.Options{
 		Name:        appName,
 		Description: "Wayland clipboard manager",
 		Assets: application.AssetOptions{
