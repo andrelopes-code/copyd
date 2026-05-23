@@ -8,6 +8,10 @@
 
 One process. The clipboard watcher and the launcher window live in the same binary — no daemon to babysit. Launches hidden at login, pops up on a global hotkey, hides again after you pick something.
 
+<p align="center">
+  <img src="docs/screenshot.png" alt="copyd window floating over a Linux desktop, showing clipboard history with a mix of images, URLs, JSON and multiline text" width="720">
+</p>
+
 > Linux only. Built and tested on Fedora 44 / GNOME 47 Wayland. macOS and Windows builds compile but autostart and packaging are not supported in this release.
 
 ## Install
